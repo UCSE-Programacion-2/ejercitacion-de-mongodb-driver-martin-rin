@@ -16,13 +16,12 @@ const client = new MongoClient(MONGO_URI);
  */
 async function connectDB() {
     try {
-        // Tu código aquí
-        
+        await client.connect();
+        console.log("Conectado a MongoDB");
     } catch (error) {
         console.error("Error al conectar a MongoDB:", error);
     }
 }
-
 // Función para cerrar la conexión (útil para tests)
 async function closeDB() {
     await client.close();

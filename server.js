@@ -17,6 +17,13 @@ const PORT = process.env.PORT || 3000;
  * 4. Llama a next().
  */
 // Tu código aquí
+// Middleware para inyectar la base de datos
+app.use((req, res, next) => {
+    req.db = client.db('MundialDB');
+    req.collection = req.db.collection('equipos');
+    next();
+});
+
 
 /**
  * TODO: Implementar un endpoint GET /equipos
@@ -25,8 +32,10 @@ const PORT = process.env.PORT || 3000;
  * 3. Debe retornar el arreglo con status 200.
  * IMPORTANTE: Recuerda que las consultas a MongoDB son asincrónicas.
  */
+// GET /equipos
 app.get('/equipos', async (req, res) => {
-    // Tu código aquí
+    const equipos = await req.collection.find().toArray();
+    res.status(200).json(equipos);
 });
 
 /**
@@ -38,7 +47,13 @@ app.get('/equipos', async (req, res) => {
  * IMPORTANTE: ¡Esta ruta debe ir ANTES que la ruta GET /equipos/:id!
  */
 app.get('/equipos/buscar', async (req, res) => {
-    // Tu código aquí
+    const tecnico = req.query.tecnico;
+
+    const equipos = await req.collection.find({
+        tecnico: { $regex: tecnico, $options: 'i' }
+    }).toArray();
+
+    res.status(200).json(equipos);
 });
 
 /**
@@ -51,9 +66,22 @@ app.get('/equipos/buscar', async (req, res) => {
  * 5. Si no lo encuentra, retornar un status 404 y { error: "Equipo no encontrado" }.
  */
 app.get('/equipos/:id', async (req, res) => {
-    // Tu código aquí
-});
+    const { id } = req.params;
 
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ error: 'ID inválido' });
+    }
+
+    const equipo = await req.collection.findOne({
+        _id: new ObjectId(id)
+    });
+
+    if (!equipo) {
+        return res.status(404).json({ error: 'Equipo no encontrado' });
+    }
+
+    res.status(200).json(equipo);
+});
 
 
 // Iniciar el servidor solo si este archivo se ejecuta directamente
